@@ -2,85 +2,76 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-
-//funciones
+// Funciones
 void cifrado();
 void descifrado();
 
 int main() {
-	//declarar variables
+    int opcion = 0;
+    printf("Cifrado Cesar \n");
 
+    while (opcion != 3) {
+        printf("\n¿Qué desea hacer?\n");
+        printf("1.) Cifrar\n");
+        printf("2.) Descifrar\n");
+        printf("3.) Salir\n");
+        printf("Seleccione una opción: ");
+        scanf("%d", &opcion);
 
+        // Evitar el uso de system("cls"), mejor limpiar el buffer
+        getchar();
 
-	int opcion;
-	printf("Cifrado Cesar \n");
-
-	while (opcion != 3) {
-		printf("\nQué desea hacer?\n");
-		printf("1.) Cifrar\n");
-		printf("2.) Descifrar\n");
-		printf("3.) Salir\n");
-		printf("Seleccione una opción: \n");
-		scanf("%d", &opcion);
-		system("cls");
-
-		//menu para elegir la función
-		switch (opcion) {
-		case 1:
-			//funcion de cifrado
-			cifrado();
-			break;
-		case 2:
-			descifrado();
-			break;
-		case 3:
-			return 3;
-		default:
-			return 0;
-		}
-	}
+        switch (opcion) {
+            case 1:
+                cifrado();
+                break;
+            case 2:
+                descifrado();
+                break;
+            case 3:
+                return 0;
+            default:
+                printf("Opción inválida, intente de nuevo.\n");
+        }
+    }
+    return 0;
 }
-// ------------------------------------------
-// función de cifrado
+
+// Función de cifrado
 void cifrado() {
-	int llave;
-	char mensaje[100], letra, cipher[100];
-	// recepción de mensaje y llave
-	printf("\nIngrese el mensaje en minúsculas que desea cifrar: ");
-	scanf("%s", &mensaje);
-	printf("\nIngrese la llave (valor numérico entero): ");
-	scanf("%d", &llave);
-	// proceso de cifrado
-	int i;
-	for (int i = 0; i < strlen(mensaje); i++) {
-		letra = mensaje[i];
-		letra = (letra - 'a' + llave + 26) % 26 + 'a';
-		cipher[i] = letra;
-	}
-	printf("\n Mensaje cifrado: %s \n", &cipher);
+    int llave;
+    char mensaje[100], cipher[100];
 
+    // Entrada de datos
+    printf("\nIngrese el mensaje en minúsculas que desea cifrar: ");
+    scanf("%s", mensaje);
+    printf("\nIngrese la llave (valor numérico entero): ");
+    scanf("%d", &llave);
 
+    // Proceso de cifrado
+    for (int i = 0; i < strlen(mensaje); i++) {
+        cipher[i] = (mensaje[i] - 'a' + llave + 26) % 26 + 'a';
+    }
+    cipher[strlen(mensaje)] = '\0'; // Asegurar terminación de cadena
+
+    printf("\nMensaje cifrado: %s\n", cipher);
 }
 
-// -----------------------------------------
-// funcion de descifrado
+// Función de descifrado
 void descifrado() {
     int llave;
-	char mensaje[100], letra, cipher[100];
-	// recepción de mensaje y llave
-	printf("\nIngrese el mensaje en minúsculas que desea descifrar: ");
-	scanf("%s", &mensaje);
-	printf("\nIngrese la llave (valor numérico entero): ");
-	scanf("%d", &llave);
-	// proceso de cifrado
-	int i;
-	for (int i = 0; i < strlen(mensaje); i++) {
-		letra = mensaje[i];
-		letra = (letra - 'a' - llave + 26) % 26 + 'a';
-		cipher[i] = letra;
-	}
-	printf("\n Mensaje original: %s \n", &cipher);
+    char mensaje[100], decipher[100];
 
-} 
+    // Entrada de datos
+    printf("\nIngrese el mensaje en minúsculas que desea descifrar: ");
+    scanf("%s", mensaje);
+    printf("\nIngrese la llave (valor numérico entero): ");
+    scanf("%d", &llave);
 
+    // Proceso de descifrado
+    for (int i = 0; i < strlen(mensaje); i++) {
+        decipher[i] = (mensaje[i] - 'a' - llave + 26) % 26 + 'a';
+    }
+    decipher[strlen(mensaje)] = '\0'; // Asegurar terminación de cadena
+
+    printf("\nMensaje original: %s\n", decipher);

@@ -1,7 +1,7 @@
-# AES-128 puro en Python - Cifrado y Descifrado (modo ECB)
+import os
 
+# Tabla S-box
 Sbox = [
-    # Tabla S-box completa (256 valores)
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5,
     0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
     0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0,
@@ -35,6 +35,7 @@ Sbox = [
     0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68,
     0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
 ]
+
 InvSbox = [0]*256
 for i in range(256):
     InvSbox[Sbox[i]] = i
@@ -42,6 +43,7 @@ for i in range(256):
 Rcon = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36]
 
 def xtime(a): return ((a << 1) ^ 0x1B) & 0xFF if a & 0x80 else (a << 1)
+
 def gmul(a, b):
     p = 0
     for _ in range(8):
@@ -58,6 +60,7 @@ def inv_sub_bytes(s): return [InvSbox[b] for b in s]
 def shift_rows(s):
     return [s[0],s[5],s[10],s[15], s[4],s[9],s[14],s[3],
             s[8],s[13],s[2],s[7], s[12],s[1],s[6],s[11]]
+
 def inv_shift_rows(s):
     return [s[0],s[13],s[10],s[7], s[4],s[1],s[14],s[11],
             s[8],s[5],s[2],s[15], s[12],s[9],s[6],s[3]]
@@ -129,25 +132,61 @@ def aes_decrypt_block(c, key):
     state = add_round_key(state, rkeys[0])
     return state
 
-def run():
-    key = [ord(c) for c in "Thats my Kung Fu"]  #Llave del cifrado
+# Padding y Modo CBC
+def pkcs7_pad(data, block_size=16):
+    pad_len = block_size - (len(data) % block_size)
+    return data + bytes([pad_len] * pad_len)
+
+def pkcs7_unpad(data):
+    pad_len = data[-1]
+    if pad_len < 1 or pad_len > 16:
+        raise ValueError("Padding inválido.")
+    return data[:-pad_len]
+
+def aes_encrypt_cbc(plaintext, key, iv):
+    assert len(iv) == 16, "El IV debe tener 16 bytes"
+    plaintext = pkcs7_pad(plaintext)
+    blocks = [plaintext[i:i+16] for i in range(0, len(plaintext), 16)]
+    cipher = []
+    prev = list(iv)
+    for block in blocks:
+        block = [b ^ p for b, p in zip(block, prev)]
+        enc = aes_encrypt_block(block, key)
+        cipher.extend(enc)
+        prev = enc
+    return bytes(cipher)
+
+def aes_decrypt_cbc(ciphertext, key, iv):
+    assert len(iv) == 16, "El IV debe tener 16 bytes"
+    blocks = [ciphertext[i:i+16] for i in range(0, len(ciphertext), 16)]
+    plaintext = []
+    prev = list(iv)
+    for block in blocks:
+        dec = aes_decrypt_block(list(block), key)
+        plain = [b ^ p for b, p in zip(dec, prev)]
+        plaintext.extend(plain)
+        prev = list(block)
+    return pkcs7_unpad(bytes(plaintext))
+
+# Interfaz
+def run_cbc():
+    key = [ord(c) for c in "Thats my Kung Fu"] #Lavve 
     choice = input("¿Deseas cifrar o descifrar? (c/d): ").lower()
     if choice == 'c':
-        text = input("Texto a cifrar (16 caracteres máximo): ")
-        text = text.ljust(16)
-        pt = [ord(c) for c in text]
-        ct = aes_encrypt_block(pt, key)
-        print("Texto cifrado (hex):", ''.join(f"{b:02X}" for b in ct))
+        text = input("Texto a cifrar: ").encode('utf-8')
+        iv = os.urandom(16)
+        ct = aes_encrypt_cbc(text, key, iv)
+        print("IV (hex):", iv.hex())
+        print("Texto cifrado (hex):", ct.hex())
     elif choice == 'd':
-        hextext = input("Texto cifrado en hex (32 caracteres): ")
-        if len(hextext) != 32:
-            print("Debe ser exactamente 32 caracteres hex.")
-            return
-        ct = [int(hextext[i:i+2], 16) for i in range(0, 32, 2)]
-        pt = aes_decrypt_block(ct, key)
-        print("Texto descifrado:", ''.join(chr(b) for b in pt).rstrip())
+        iv_hex = input("IV en hex (32 caracteres): ")
+        ct_hex = input("Texto cifrado en hex: ")
+        iv = bytes.fromhex(iv_hex)
+        ct = bytes.fromhex(ct_hex)
+        pt = aes_decrypt_cbc(ct, key, iv)
+        print("Texto descifrado:", pt.decode('utf-8'))
     else:
         print("Opción no válida.")
 
 if __name__ == "__main__":
-    run()
+    run_cbc()
